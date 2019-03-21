@@ -96,11 +96,7 @@ command -v fix_bootif >/dev/null || . /lib/net-lib.sh
 
         for iface in $IFACES; do
             if [ "$bootdev" = "$iface" ] || [ "$NEEDNET" = "1" ]; then
-		if [ -n "$netroot" ] && [ -n "$DRACUT_SYSTEMD" ]; then
-                    echo "systemctl is-active initrd-root-device.target || [ -f /tmp/net.${iface}.did-setup ]"
-		else
-                    echo "[ -f /tmp/net.${iface}.did-setup ]"
-		fi >$hookdir/initqueue/finished/wait-$iface.sh
+                echo "${DRACUT_SYSTEMD+systemctl is-active initrd-root-device.target || }[ -f /tmp/net.${iface}.did-setup ]" >$hookdir/initqueue/finished/wait-$iface.sh
             fi
         done
     # Default: We don't know the interface to use, handle all
