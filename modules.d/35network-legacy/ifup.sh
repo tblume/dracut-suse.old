@@ -70,7 +70,7 @@ dhcp_wicked_apply() {
     [ -n "${MTU}" ] && ip $1 link set mtu "$MTU" dev "$INTERFACE"
 
     # Setup hostname
-    [ -n "${HOSTNAME}" ] && echo $HOSTNAME > /proc/sys/kernel/hostname
+    [ -n "${HOSTNAME}" ] && hostname "$HOSTNAME"
 
     # If nameserver= has not been specified, use what dhcp provides
     if [ ! -s /tmp/net.$netif.resolv.conf.ipv${1:1:1} ]; then
@@ -80,12 +80,6 @@ dhcp_wicked_apply() {
 
         if [ -n "${DNSSEARCH}" ]; then
             echo search "${DNSSEARCH}"
-        fi >> /tmp/net.$netif.resolv.conf.ipv${1:1:1}
-
-        if  [ -n "${DNSSERVERS}" ] ; then
-            for s in ${DNSSERVERS}; do
-                echo nameserver "$s"
-            done
         fi >> /tmp/net.$netif.resolv.conf.ipv${1:1:1}
     fi
     # copy resolv.conf if it doesn't exist yet, modify otherwise
@@ -134,6 +128,7 @@ dhcp_dhclient_run() {
     dhclient "$@" \
                  ${_timeout:+-timeout $_timeout} \
                  -q \
+                 -1 \
                  -cf /etc/dhclient.conf \
                  -pf /tmp/dhclient.$netif.pid \
                  -lf /tmp/dhclient.$netif.lease \
