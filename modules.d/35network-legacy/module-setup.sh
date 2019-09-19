@@ -29,6 +29,7 @@ install() {
     inst_multiple -o arping arping2
     strstr "$(arping 2>&1)" "ARPing 2" && mv "$initdir/bin/arping" "$initdir/bin/arping2"
     inst_multiple -o wicked
+    inst_multiple -o hostname
     inst_multiple -o ping ping6
     inst_multiple -o teamd teamdctl teamnl
     inst_simple /etc/libnl/classid
