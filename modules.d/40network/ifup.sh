@@ -604,7 +604,8 @@ if [ ! -e /tmp/net.${netif}.up ]; then
             do_dhcp -4
         fi
     fi
-    if [ $? -eq 0 ]; then
+
+    if [ $? -eq 0 ] && [ -f /tmp/leaseinfo.${netif}* ]; then
         bring_online
     fi
 fi
