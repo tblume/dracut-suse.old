@@ -907,6 +907,13 @@ for_each_kmod_dep() {
             $_func ${_modpath} || exit $?
         done
     )
+
+    for suse_mod_dep in ${suse_mod_deps["${_kmod%.ko*}"]}; do
+        _modpath=$(modinfo -k "$kernel" -F filename "$suse_mod_dep" 2> /dev/null)
+        [ -n "$_modpath" ] || continue
+        for_each_kmod_dep "$_func" $(basename "${_modpath%.ko*}") "$@"
+        $_func ${_modpath} || exit $?
+    done
 }
 
 dracut_kernel_post() {
