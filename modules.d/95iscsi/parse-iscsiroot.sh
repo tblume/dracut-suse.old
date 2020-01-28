@@ -98,7 +98,7 @@ fi
 modprobe --all -b -q qla4xxx cxgb3i cxgb4i bnx2i be2iscsi
 
 if [ -n "$netroot" ] && [ "$root" != "/dev/root" ] && [ "$root" != "dhcp" ]; then
-    if ! getargbool 1 rd.neednet >/dev/null || ! getarg "ip="; then
+    if ! getargbool 1 rd.neednet >/dev/null || ! getarg "ip=" || ! [ -f /sys/firmware/ibft/ethernet*/ip-addr ]; then
         initqueue --unique --onetime --settled /sbin/iscsiroot dummy "'$netroot'" "'$NEWROOT'"
     fi
 fi
