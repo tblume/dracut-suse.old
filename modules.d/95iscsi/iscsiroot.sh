@@ -37,7 +37,7 @@ iroot=${iroot#:}
 modprobe crc32c 2>/dev/null
 
 if [ -z "${DRACUT_SYSTEMD}" ] && [ -e /sys/module/bnx2i ] && ! [ -e /tmp/iscsiuio-started ]; then
-        iscsiuio
+        [ -f /etc/crypttab ] && grep -q '_netdev' /etc/crypttab || iscsiuio
         > /tmp/iscsiuio-started
 fi
 
@@ -191,7 +191,7 @@ handle_netroot()
     fi
 
    if [ -z "$DRACUT_SYSTEMD" ]; then
-       iscsid
+       [ -f /etc/crypttab ] && grep -q '_netdev' /etc/crypttab || iscsid
        sleep 2
    fi
 
