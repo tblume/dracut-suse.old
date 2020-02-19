@@ -632,12 +632,10 @@ for p in $(getargs ip=); do
                     source_hook initqueue/online $netif
             ;;
             *)
-                if [ $ret -eq 0 ]; then
-                    setup_net $netif
-                    source_hook initqueue/online $netif
-                    if [ -z "$manualup" ]; then
-                        /sbin/netroot $netif
-                    fi
+                setup_net $netif
+                source_hook initqueue/online $netif
+                if [ -z "$manualup" ]; then
+                    /sbin/netroot $netif
                 fi
                 ;;
         esac
