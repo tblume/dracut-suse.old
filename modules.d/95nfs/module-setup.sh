@@ -50,11 +50,14 @@ cmdline() {
     echo "$nfs_root"
 
     ### ip= ###
-    if [[ $nfs_device = [0-9]*\.[0-9]*\.[0-9]*.[0-9]* ]] || [[ $nfs_device = \[.*\] ]]; then
+    if [[ $nfs_device = [0-9]*\.[0-9]*\.[0-9]*\.[0-9]* ]] || [[ $nfs_device = \[*:*:*\] ]]; then
         nfs_address="${nfs_device%%:*}"
     else
-        lookup=$(host "${nfs_device%%:*}"| grep " address " | head -n1)
-        nfs_address=${lookup##* }
+        nfs_address=${nfs_options##*addr=}
+        if [[ "$nfs_address" != [0-9]*\.[0-9]*\.[0-9]*\.[0-9]* ]] && ! strglobin "$nfs_address" '*:*:*'; then
+            lookup=$(host "${nfs_device%%:*}"| grep " address " | head -n1)
+            nfs_address=${lookup##* }
+        fi
     fi
     ifname=$(ip -o route get to $nfs_address | sed -n 's/.*dev \([^ ]*\).*/\1/p')
     if [ -d /sys/class/net/$ifname/bonding ]; then
