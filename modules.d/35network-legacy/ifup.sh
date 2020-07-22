@@ -593,24 +593,39 @@ if [ -n "$DO_BOND_SETUP" -o -n "$DO_TEAM_SETUP" -o -n "$DO_VLAN_SETUP" ]; then
 fi
 
 # no ip option directed at our interface?
-if [ ! -e /tmp/net.${netif}.up ]; then
+if [ -z "$NO_AUTO_DHCP" ] && [ ! -e /tmp/net.${netif}.up ]; then
+    ret=1
     if [ -e /tmp/net.bootdev ]; then
         BOOTDEV=$(cat /tmp/net.bootdev)
         if [ "$netif" = "$BOOTDEV" ] || [ "$BOOTDEV" = "$(cat /sys/class/net/${netif}/address)" ]; then
-            load_ipv6
             do_dhcp
+            ret=$?
         fi
     else
-        if getargs 'ip=dhcp6'; then
+        # No ip lines, no bootdev -> default to dhcp
+        ip=$(getarg ip)
+
+        if getargs 'ip=dhcp6' || [ -z "$ip" -a "$netroot" = "dhcp6" ]; then
             load_ipv6
             do_dhcp -6
+            ret=$?
         fi
-        if getargs 'ip=dhcp' && [ "$autoconf" != "dhcp" ]; then
+        if getargs 'ip=dhcp' || [ -z "$ip" -a "$netroot" != "dhcp6" ]; then
             do_dhcp -4
+            ret=$?
         fi
     fi
-    if [ $? -eq 0 ] && [ -n "$(ls /tmp/leaseinfo.${netif}*)" ]; then
-        bring_online
+
+    for s in $(getargs nameserver); do
+        [ -n "$s" ] || continue
+        echo nameserver $s >> /tmp/net.$netif.resolv.conf
+    done
+
+    if [ "$ret" -eq 0 ] && [ -n "$(ls /tmp/leaseinfo.${netif}*)" ]; then
+         > /tmp/net.${netif}.did-setup
+         if [ -e /sys/class/net/${netif}/address ]; then
+             > /tmp/net.$(cat /sys/class/net/${netif}/address).did-setup
+         fi
     fi
 fi
 
