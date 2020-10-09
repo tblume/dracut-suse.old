@@ -19,7 +19,7 @@
 %define dracutlibdir %{_prefix}/lib/dracut
 
 Name:           dracut
-Version:        049
+Version:        049.1+suse.157.g6d252b7f
 Release:        0
 Summary:        Initramfs generator using udev
 License:        GPL-2.0-or-later AND LGPL-2.1-or-later
@@ -28,6 +28,7 @@ URL:            https://dracut.wiki.kernel.org/
 Source0:        dracut-%{version}.tar.xz
 Source1:        dracut-rpmlintrc
 Source2:        README.susemaint
+Source10:       run-tests.sh
 BuildRequires:  asciidoc
 BuildRequires:  bash
 BuildRequires:  docbook-xsl-stylesheets
@@ -115,8 +116,17 @@ Requires:       keyutils
 This package contains all modules that are part of dracut upstream
 but are not normally supported or required.
 
+%package qa-testsuite
+Summary:        Test suite for QA
+Group:          System/Benchmark
+Requires:       %{name}
+
+%description qa-testsuite
+This provides the %{name} testsuite scripts and binaries for QA
+
 %prep
 %setup -q
+%autopatch -p1
 
 %build
 %configure\
@@ -164,6 +174,18 @@ mv %{buildroot}/%{dracutlibdir}/modules.d/45ifcfg/write-ifcfg.sh %{buildroot}/%{
 ln -s %{dracutlibdir}/modules.d/45ifcfg/write-ifcfg-redhat.sh %{buildroot}/%{dracutlibdir}/modules.d/45ifcfg/write-ifcfg.sh
 %endif
 
+#testsuite installation
+mkdir -p %{buildroot}/usr/lib/dracut/tests
+mkdir -p %{buildroot}/usr/lib/dracut/tests/logs
+sed -i 's/ dash / bash /g' $(grep -rl dash test/)
+sed -i 's/ext3 /btrfs /g' $(grep -rl ext3 test/)
+sed -i 's/ ping / fping /g' $(grep -rl ping test/)
+sed -i 's/seek=80 /seek=1024 /' $(find test/ -name test.sh)
+sed -i 's/ dhclient / /' $(find test/ -name test.sh)
+cp -ar test/* %{buildroot}/usr/lib/dracut/tests/
+install -m0755 %{S:10} %{buildroot}/usr/lib/dracut/tests/
+
+
 %pre
 
 %post
@@ -193,7 +215,17 @@ fi
 %post ima
 %{?regenerate_initrd_post}
 
+%post qa-testsuite
+ln -sf  %{dracutlibdir}/dracut-functions.sh /%{_prefix}/lib/dracut/tests
+ln -sf  %{dracutlibdir}/dracut-init.sh /%{_prefix}/lib/dracut/tests
+ln -sf  %{dracutlibdir}/dracut-install /%{_prefix}/lib/dracut/tests
+ln -sf  %{dracutlibdir}/dracut-logger.sh /%{_prefix}/lib/dracut/tests
+ln -sf  %{dracutlibdir}/modules.d /%{_prefix}/lib/dracut/tests
+ln -sf  %{_bindir}/dracut /%{_prefix}/lib/dracut/tests/dracut.sh
+
 %preun
+find %{_prefix}/lib/dracut/tests -type l -print | xargs /bin/rm -f
+rm -r %{_prefix}/lib/dracut/tests/logs/*
 
 %postun
 %{?regenerate_initrd_post}
@@ -392,5 +424,10 @@ fi
 %{_unitdir}/*.service
 %{_unitdir}/*/*.service
 %{_datarootdir}/bash-completion/completions/dracut
+
+%files qa-testsuite
+%defattr(-,root,root,-)
+%dir %{dracutlibdir}/tests
+%{dracutlibdir}/*
 
 %changelog
