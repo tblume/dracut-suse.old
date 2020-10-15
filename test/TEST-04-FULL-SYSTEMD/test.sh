@@ -84,6 +84,7 @@ test_setup() {
 	inst_multiple grep
         inst_simple ./fstab /etc/fstab
         rpm -ql systemd | xargs -r $DRACUT_INSTALL ${initdir:+-D "$initdir"} -o -a -l
+        rpm -ql haveged | xargs -r $DRACUT_INSTALL ${initdir:+-D "$initdir"} -o -a -l
         inst /lib/systemd/system/systemd-remount-fs.service
         inst /lib/systemd/systemd-remount-fs
         inst /lib/systemd/system/systemd-journal-flush.service
